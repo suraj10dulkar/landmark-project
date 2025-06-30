@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
+// 🌐 Backend URL setup (fallback to localhost in development)
+const BASE_URL = "https://landmark-project.onrender.com" || '';
+
 const App = () => {
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -10,19 +13,27 @@ const App = () => {
   const debounceTimeout = useRef(null);
 
   const fetchProducts = async (pageNum = 1, searchTerm = "") => {
-    const res = await axios.get("http://localhost:5000/api/products", {
-      params: { page: pageNum, search: searchTerm },
-    });
-    setProducts(res.data.products);
-    setTotalItems(res.data.total);
-    setPage(res.data.page);
+    try {
+      const res = await axios.get(`${BASE_URL}/api/products`, {
+        params: { page: pageNum, search: searchTerm },
+      });
+      setProducts(res.data.products);
+      setTotalItems(res.data.total);
+      setPage(res.data.page);
+    } catch (error) {
+      console.error("Error fetching products:", error.message);
+    }
   };
 
   const fetchSuggestions = async (val) => {
-    const res = await axios.get("http://localhost:5000/api/search-suggestions", {
-      params: { q: val },
-    });
-    setSuggestions(res.data);
+    try {
+      const res = await axios.get(`${BASE_URL}/api/search-suggestions`, {
+        params: { q: val },
+      });
+      setSuggestions(res.data);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error.message);
+    }
   };
 
   const handleSearchChange = (e) => {
@@ -34,12 +45,12 @@ const App = () => {
     debounceTimeout.current = setTimeout(() => {
       if (val.length > 1) {
         fetchSuggestions(val);
-        fetchProducts(1, val); // fetch filtered products on search
+        fetchProducts(1, val); // fetch filtered products
       } else {
         setSuggestions([]);
-        fetchProducts(1, ""); // reset if cleared
+        fetchProducts(1, ""); // reset
       }
-    }, 400); // debounce delay
+    }, 400);
   };
 
   const handleSuggestionClick = (suggestion) => {
